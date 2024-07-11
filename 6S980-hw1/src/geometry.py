@@ -33,7 +33,7 @@ def transform_rigid(
     transform: Float[Tensor, "*#batch 4 4"],
 ) -> Float[Tensor, "*batch 4"]:
     """Apply a rigid-body transform to homogeneous points or vectors."""
-    return torch.einsum("...i, ...ij ->...i", xyz, transform)
+    return torch.einsum("...ij, ...i ->...i", transform, xyz)
     raise NotImplementedError("This is your homework.")
 
 
@@ -44,8 +44,8 @@ def transform_world2cam(
     """Transform points or vectors from homogeneous 3D world coordinates to homogeneous
     3D camera coordinates.
     """
-
-    return torch.einsum("...i, ...ij ->...i", xyz, cam2world)
+    world2cam = torch.inverse(cam2world)
+    return torch.einsum("...ij, ...j ->...i", world2cam, xyz)
     raise NotImplementedError("This is your homework.")
 
 
@@ -57,7 +57,8 @@ def transform_cam2world(
     3D world coordinates.
     """
 
-    return torch.einsum("...i, ...ij ->...i", xyz, cam2world)
+    return torch.einsum("...ij, ...j ->...i",cam2world, xyz)
+    # return cam2world @ xyz
     raise NotImplementedError("This is your homework.")
 
 
@@ -75,7 +76,7 @@ def project(
         "...ij,...j -> ...i", intrinsics_0, xyz
     )  # [batch, 3]
     px_coords = torch.div(
-        homogeneous_proj[..., :2] / homogeneous_proj[..., -1]
+        homogeneous_proj[..., :2] ,homogeneous_proj[..., -1]
     )  # [batch,2]
 
     return px_coords
